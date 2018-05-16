@@ -1,6 +1,7 @@
 from random import randint, random as rd
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
+import numpy
 
 """
 En este archvo se tienen las funciones necesarias para implementar un algoritmo genético para varios
@@ -8,7 +9,7 @@ problemas predeterminados.
 """
 
 
-def random_mcbella(n, k):
+def random_ag(n, k):
     """
     Método que genera una población de tamaño n de forma "aleatoria" para el problema de mcbella
     :param n: tamaño de la población deseado
@@ -47,7 +48,7 @@ def random_mcbella(n, k):
                 fen.append(var)
                 cont = cont + 1
 
-        # si es la última posición y solo queda el 5 volvemos a empezar
+        # si es la última posición y solo queda el último valor por poner volvemos a empezar
         if cont < k:
             continue
 
@@ -57,7 +58,7 @@ def random_mcbella(n, k):
             continue
         else:
             # checamos si se tiene un ciclo
-            if checa_ciclo_mcbella(fen):
+            if checa_ciclo(fen):
                 i = i + 1
                 continue
             else:
@@ -75,9 +76,9 @@ def random_mcbella(n, k):
     return poblacion
 
 
-def checa_ciclo_mcbella(fen):
+def checa_ciclo(fen):
     """
-    Método que revisa si existe un ciclo en el fenotipo dado (puede ser un fenotipo parcial.
+    Método que revisa si existe un ciclo en el fenotipo dado.
     Notar que siempre se empieza en el tipo 1
     :param fen: fenotipo parcial (o total) a revisar
     :return: verdadero en caso que haya ciclo o falso en otro caso
@@ -130,7 +131,7 @@ def fitness_mcbella(fen):
     return suma
 
 
-def crossover_mcbella(fen_1, fen_2):
+def crossover(fen_1, fen_2):
     """
     Método que combina dos fenotipos de forma aleatoria.
     :param fen_1: fenotipo 1
@@ -203,7 +204,7 @@ def crossover_mcbella(fen_1, fen_2):
         flag = not len(fen_2) == len(fen)
 
         # si ya terminamos checamos si tiene un ciclo, en caso afirmativo volvemos a empezar
-        if not flag and checa_ciclo_mcbella(fen):
+        if not flag and checa_ciclo(fen):
             fen = []
             flag = True
             cont = 0
@@ -217,15 +218,13 @@ def crossover_mcbella(fen_1, fen_2):
     return fen
 
 
-def algoritmo_genetico(iter, n, k, random, fitness, crossover):
+def algoritmo_genetico(iteraciones, n, k, fitness):
     """
     Método que implementa el algoritmo genético dadas las funciones que vienen como parámetros
-    :param iter: numero de iteraciones a realizar
+    :param iteraciones: numero de iteraciones a realizar
     :param n: tamaño de la población
     :param k: tamaño de cada fenotipo
-    :param random: funcion que genera la poblacion inicial de manera aleatoria
     :param fitness: función que evalua el fitness de un fenotipo dado
-    :param crossover: función que obtiene la progenie de dos fenotipos
     :return: el mejor valor encontrado
     """
     t_0 = datetime.now()
@@ -240,16 +239,17 @@ def algoritmo_genetico(iter, n, k, random, fitness, crossover):
     # generamos la muestra hasta que no regrese vacia, hacemos tres intentos
     cont = 0
     pob = []
+    t_1 = datetime.now()
     while len(pob) == 0 and cont < 3:
-        t_1 = datetime.now()
         print("Generamos población inicial: " + str((t_1 - t_0).seconds))
-        pob = random(n, k)
+        pob = random_ag(n, k)
         cont = cont + 1
 
     t_2 = datetime.now()
     print("Empezamos las iteraciones pedidas: " + str((t_2 - t_1).seconds))
+
     # iteramos el número de veces que viene en el parámetro
-    while i < iter:
+    while i < iteraciones:
         print("Iteración: " + str(i))
         print("Mínimo: " + str(min_global))
 
@@ -272,7 +272,7 @@ def algoritmo_genetico(iter, n, k, random, fitness, crossover):
         # calculamos la proba con respecto al fitness
         poblacion["proba"] = poblacion.apply(lambda row: 1-(0.9)*row["fitness"]/poblacion.iloc[n-1]["fitness"], axis=1)
 
-        # revolvemos la muestra para darle más oportunidad a todos de salir 
+        # revolvemos la muestra para darle más oportunidad a todos de salir
         poblacion.sample(frac=1)
 
         # iteramos hasta tener la nueva muestra
@@ -309,3 +309,17 @@ def algoritmo_genetico(iter, n, k, random, fitness, crossover):
     print("Duración total del método (s): " + str((t_4 - t_0).seconds))
 
     return [min_global, fen_min]
+
+
+def fitness_ciudades(coordenadas):
+    """
+    Método que calcula la función fitness para un punto en R^2
+    con la norma ecuclidiana (norma dos)
+    :param coordenadas: punto (x,y) en el plano indicando el lugar de la ciudad
+    :return: valor real con el fitness
+    """
+    # calculamos el valor
+    coord = numpy.array(coordenadas)
+
+    return numpy.linalg.norm(coord)
+
