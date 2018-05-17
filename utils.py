@@ -311,15 +311,35 @@ def algoritmo_genetico(iteraciones, n, k, fitness):
     return [min_global, fen_min]
 
 
-def fitness_ciudades(coordenadas):
+def fitness_ciudades(fen):
     """
-    Método que calcula la función fitness para un punto en R^2
+    Método que calcula la función fitness para un fenotipo con putnos en R^2
     con la norma ecuclidiana (norma dos)
-    :param coordenadas: punto (x,y) en el plano indicando el lugar de la ciudad
+    :param fen: fenotipo indicando el orden de las ciudades a recorrer
     :return: valor real con el fitness
     """
-    # calculamos el valor
-    coord = numpy.array(coordenadas)
+    # abrimos el archivo con las coordenadas de las ciudades
+    ciudades = open('berlin52.txt', 'r')
+    ciudades = [[int(float(num)) for num in line.split(' ')] for line in ciudades if line != 'EOF\n' and line != 'EOF']
 
-    return numpy.linalg.norm(coord)
+    # calculamos el valor sumando la distancia euclidiana por cada ciudad a visitar
+    i = 0
+    suma = 0
+    for city in fen:
+        x = list()
+        x.append(ciudades[i][2])
+        x.append(ciudades[i][1])
+
+        y = list()
+        y.append(ciudades[int(city-1)][2])
+        y.append(ciudades[int(city-1)][1])
+
+        coord = numpy.array([x, y])
+
+        suma = suma + numpy.linalg.norm(coord)
+
+        i = i + 1
+
+
+    return suma
 
